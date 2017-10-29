@@ -1,0 +1,110 @@
+﻿    public function select_all_news($cate){
+        $this->db->select('*');
+        $this->db->from('news');
+        $this->db->where("news_category",$cate);
+        $query = $this->db->get();
+        $query_result=$query->result();
+        if ($query->num_rows() > 0) {
+            $i=0;
+            foreach ($query_result as $row) {
+                $query_result[$i]->all_img = $this->get_photo($row->id);
+                $i++;
+            }
+            return $query_result;
+        }
+        return false;
+    }
+	
+	
+	public function get_photo($f_id){
+        $this->db->select('*');
+        $this->db->from('news_photo');
+        $this->db->where("f_id",$f_id);
+         $query = $this->db->get();
+    if ($query->num_rows() > 0) {
+            foreach ($query->result() as $row) {
+                $data[] = $row;
+            }
+            return $data;
+        }
+        return false;
+}
+
+
+
+
+
+//-----------------------------------------------------table_tree--------------------------------//
+   <tr>
+     <td rowspan="<?php echo sizeof($key->sub_img)?>"><?php echo $count++ ?></td>
+     <td rowspan="<?php echo sizeof($key->sub_img)?>" data-toggle="modal" data-target="#myModal"><?php echo $arr_place[$key->view_id] ;?></td>
+ <?php foreach($key->sub_img as  $keys): ?>
+ <?php  $from =  date("Y-m-d", $keys->date_from);
+        $to =  date("Y-m-d", $keys->date_to);
+        if(time() < $keys->date_to){$state="جارى";}
+        else{$state="منتهى";}
+        
+        ?>
+      <td> <?php echo $from ?></td>
+      <td> <?php echo $to ?></td>
+      <td> <?php echo $state ?> </td>
+      <td data-title="التحكم" class="text-center">
+                    <a href="<?php  echo base_url().'dashboard/updateadver/'.$keys->id?>" class="btn btn-warning btn-xs "><i class="fa fa-pencil"></i> تعديل</a>
+                    <a  href="<?php  echo base_url().'dashboard/delete_id/'.$keys->id."/advertising/addadver"?>" onclick="return confirm('هل انت متأكد من عملية الحذف ؟');" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i> حذف</a>
+      </td>
+      <td>
+       <button type="button" class="btn btn-info btn-xs " data-toggle="modal" data-target="#myModal<?php echo $keys->id?>"><i class="fa fa-list"></i> التفاصيل </button>
+      </td>
+  </tr>
+  
+  //-------------------------------------------------join_model----------------------------------//
+      public function select_all_reservs_byday(){
+        $this->db->select('patients_reservations.* , patients.patient_national_id as pet_nat,patients.patient_name,patients.tele');
+        $this->db->from("patients_reservations");
+        $this->db->join('patients', ' patients.patient_national_id = patients_reservations.patient_national_id');
+        $this->db->where("patients_reservations.reservations_date",strtotime(date("Y-m-d",time())));
+        $this->db->group_by("patients_reservations.doctor_id");
+        $this->db->order_by("id","DESC");
+        $query = $this->db->get();
+        $query_result=$query->result();
+        if ($query->num_rows() > 0) {
+            $i=0;
+            foreach ($query_result as $row) {
+                $query_result[$i]->all_img = $this->get_bydoc($row->doctor_id);
+                $i++;
+            }
+            return $query_result;
+        }
+        return false;
+    
+    }
+
+
+ //-------------------------------------------------form_serialize_ajax----------------------------------//
+        
+  <?php echo form_open("admin/schoolreports",array("id"=>"quizform"))?>
+<script>
+          $("#go").click(function () {
+            var data=$("#quizform").serialize();
+            var action="<?php echo base_url('admin/fullreport_area/')?>";
+            $.ajax({
+                url:action,
+                type:'POST',
+                data:data,
+                dataType: "html",
+                beforeSend:function(){
+                    $("#result").html('<div class="overlay">\n' +'<i class="fa fa-refresh fa-spin"></i>\n' +'</div>\n');
+                },
+                success:function(data){
+                    $("#result").html(data);
+                }
+            });
+            return false;
+        });
+</script>
+ //----------------------------------------------------------------------------------------------------//
+
+	
+	
+
+

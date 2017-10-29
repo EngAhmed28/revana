@@ -1,0 +1,264 @@
+<?php
+class Web extends CI_Controller
+{
+
+    public $header ;
+
+    public function __construct()
+    {
+        parent::__construct();
+        
+        $this->load->helper(array('url','text','permission','form','cookie'));
+        $this->load->library('pagination');
+        $this->load->model('Advertising');
+        $this->left = $this->Advertising->select_adver_left();
+        $this->load->model('Home_web');
+        $this->customers = $this->Home_web->select_customers();
+        $this->footer = $this->Home_web->select_footer();
+        $this->load->model('Course');
+        $this->all_courses_drop = $this->Course->get_all_courses();
+        // $this->test($this->customers);
+        $this->load->model('Us');
+        $this->about_us= $this->Us->select('', 1);
+
+
+    }
+    private function test($data = array())
+    {
+
+        echo "<pre>";
+
+        print_r($data);
+
+        echo "</pre>";
+
+        die;
+
+    }
+
+    private function message($type, $text)
+    {
+
+        if ($type == 'success') {
+
+            return $this->session->set_flashdata('message', '<div class="alert alert-success alert-dismissible shadow" data-sr="wait 0s, then enter bottom and hustle 100%"><button type="button" class="close pull-left" data-dismiss="alert">×</button><h4 class="text-lg"><i class="fa fa-check icn-xs"></i> تم بنجاح ...</h4><p>' . $text . '!</p></div>');
+
+        } elseif ($type == 'wiring') {
+
+            return $this->session->set_flashdata('message', '<div class="alert alert-warning alert-dismissible" data-sr="wait 0.6s, then enter bottom and hustle 100%"><button type="button" class="close pull-left" data-dismiss="alert">×</button><h4 class="text-lg"><i class="fa fa-exclamation-triangle icn-xs"></i> تحذير هام ...</h4><p>' . $text . '</p></div>');
+
+        } elseif ($type == 'error') {
+
+            return $this->session->set_flashdata('message', '<div class="alert alert-danger alert-dismissible" data-sr="wait 0.3s, then enter bottom and hustle 100%"><button type="button" class="close pull-left" data-dismiss="alert">×</button><h4 class="text-lg"><i class="fa fa-exclamation-circle icn-xs"></i> خطآ ...</h4><p>' . $text . '</p></div>');
+
+        }
+
+    }
+    private function thumb($data)
+
+    {
+
+        $config['image_library'] = 'gd2';
+
+        $config['source_image'] =$data['full_path'];
+
+        $config['new_image'] = 'uploads/thumbs/'.$data['file_name'];
+
+        $config['create_thumb'] = TRUE;
+
+        $config['maintain_ratio'] = TRUE;
+
+        $config['thumb_marker']='';
+
+        $config['width'] = 275;
+
+        $config['height'] = 250;
+
+        $this->load->library('image_lib', $config);
+
+        $this->image_lib->resize();
+
+    }
+    private  function upload_image($file_name){
+
+        $config['upload_path'] = 'uploads/images';
+
+        $config['allowed_types'] = 'gif|Gif|ico|ICO|jpg|JPG|jpeg|JPEG|BNG|png|PNG|bmp|BMP|WMV|wmv|MP3|mp3|FLV|flv|SWF|swf';
+
+        $config['max_size']    = '1024*8';
+
+        $config['encrypt_name']=true;
+
+        $this->load->library('upload',$config);
+
+        if(! $this->upload->do_upload($file_name)){
+
+            return  false;
+
+        }else{
+
+            $datafile = $this->upload->data();
+
+            $this->thumb($datafile);
+
+            return  $datafile['file_name'];
+
+
+
+        }
+
+
+    }
+    //////////////////////////////////
+    private  function upload_file($file_name){
+
+        $config['upload_path'] = 'uploads/files';
+
+        $config['allowed_types'] = 'gif|Gif|ico|ICO|jpg|JPG|jpeg|JPEG|BNG|png|PNG|bmp|BMP|WMV|wmv|MP3|mp3|FLV|flv|SWF|swf|pdf|PDF|xls|xlsx|mp4|doc|docx|txt|rar|tar.gz|zip';
+
+        $config['max_size']    = '1024*8';
+
+        $config['overwrite'] = true;
+        $this->load->library('upload',$config);
+
+        if(! $this->upload->do_upload($file_name)){
+
+            return  false;
+
+        }else {
+
+            $datafile = $this->upload->data();
+
+            return $datafile['file_name'];
+
+        }
+
+    }
+
+     private function pagnate($method,$recordcount,$per_page,$segment){
+        $config = array();
+        $config["base_url"] = base_url() . "Web/".$method;
+        $config["total_rows"] = $recordcount;
+        $config["per_page"] = $per_page;
+        $config["uri_segment"] = $segment;
+        $config['use_page_numbers'] = TRUE;
+        $config['full_tag_open'] = '<ul class="pagination" >';
+        $config['full_tag_close'] = '</ul>';
+        $config['first_link'] = '<li class="disabled"><a href="#">«</a></li>';
+        $config['last_link'] = '<li><a href="#">»</a></li>';
+        $config['first_tag_open'] = '<li>';
+        $config['first_tag_close'] = '</li>';
+        $config['prev_link'] = '&laquo';
+        $config['prev_tag_open'] = '<li class="prev">';
+        $config['prev_tag_close'] = '</li>';
+        $config['next_link'] = '&raquo';
+        $config['next_tag_open'] = '<li>';
+        $config['next_tag_close'] = '</li>';
+        $config['last_tag_open'] = '<li>';
+        $config['last_tag_close'] = '</li>';
+        $config['cur_tag_open'] = '<li class="active"><a href="#">';
+        $config['cur_tag_close'] = '</a></li>';
+        $config['num_tag_open'] = '<li>';
+        $config['num_tag_close'] = '</li>';
+        $this->pagination->initialize($config);
+        return $config;
+    }
+
+    ////////////////////end of excel library option
+/*
+        public function index(){
+
+            $this->load->model('Home_web');
+            $data['news'] = $this->Home_web->select_news(6);
+
+            //$this->test($data['news']);
+
+            $data['title'] ='موقع كورسات بلاحدود';
+            $data['subview'] = 'web/home';
+            $this->load->view('index1', $data);
+
+    }
+
+    public function single_news(){
+        $this->load->model('Home_web');
+        $id = $this->uri->segment(3);
+        $data['details'] = $this->Home_web->select_details($id);
+
+        if($this->input->post('add')){
+            $this->Home_web->insert();
+            $this->message('success','تم ارسال ');
+            redirect('web/single_news/'.$this->uri->segment(3).'','refresh');
+        }
+        $data['comments'] = $this->Home_web->select_comment_web($id);
+        $data['imgs'] = $this->Home_web->select_news_img($id);
+       // $this->test($data['imgs']);
+        $data['title'] ='موقع كورسات بلاحدود';
+        $data['subview'] = 'web/single_news';
+        $this->load->view('index1', $data);
+    }
+*/
+
+    //========================================================================================sherif
+
+
+    public function index(){
+
+        $this->load->model('Home_web');
+        $data['news'] = $this->Home_web->select_news(6);
+        $this->load->model('Abouts');
+        $data['important']=$this->Abouts->select_web(2);
+        $this->load->model('Albums');
+        $data['albums']=$this->Albums->select_web(8);
+        //===start
+        $this->load->model('Sessions');
+        $data['home_courses']=$this->Sessions->select();
+        $this->load->model('Trainer');
+        $data['home_trainers_opinions']=$this->Trainer->select_openions(6);
+        $this->load->model('Videos');
+        $data['all_videos'] = $this->Videos->select_videos_web();
+        $data['about_us'] = $this->Abouts->get_about(1);
+        
+                $this->load->model('Slider_model');
+         $data["slider"]=$this->Slider_model->select('');
+        
+        
+        
+          $this->load->model('Offer');
+        $data['offers'] = $this->Offer->select();
+        //====end
+        $data['title'] ='موقع كورسات بلاحدود';
+        $data['subview'] = 'web/home';
+        $this->load->view('index1', $data);
+
+    }
+
+    public function single_news(){
+        $this->load->model('Home_web');
+        $id = $this->uri->segment(3);
+        $data['details'] = $this->Home_web->select_details($id);
+
+        if($this->input->post('add')){
+            $this->Home_web->insert();
+            $this->message('success','تم ارسال ');
+            redirect('web/single_news/'.$this->uri->segment(3).'','refresh');
+        }
+        $data['comments'] = $this->Home_web->select_comment_web($id);
+        $data['imgs'] = $this->Home_web->select_news_img($id);
+        $data['title'] ='موقع كورسات بلاحدود';
+        $data['subview'] = 'web/single_news';
+        $this->load->view('index1', $data);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
